@@ -20,6 +20,35 @@ const TIME_WINDOW = 5000;
 const userMessages = {};
 
 // =======================
+// 🎉 JOIN NOTICE
+// =======================
+bot.on("message", async (msg) => {
+  if (!msg.new_chat_members) return;
+
+  const chatId = msg.chat.id;
+
+  for (const member of msg.new_chat_members) {
+    await bot.sendMessage(
+      chatId,
+      `👋 *SELAMAT DATANG*
+
+\`\`\`
+User   : ${member.first_name}
+Status : Member Baru
+\`\`\`
+
+Harap baca aturan grup dan semoga betah 🙌`,
+      {
+        parse_mode: "Markdown",
+        ...(msg.message_thread_id && {
+          message_thread_id: msg.message_thread_id
+        })
+      }
+    );
+  }
+});
+
+// =======================
 // MAIN LISTENER
 // =======================
 bot.on("message", async (msg) => {
@@ -112,10 +141,14 @@ bot.onText(/\/setmute (\d+)/, async (msg, match) => {
 
   DEFAULT_MUTE_DURATION = parseInt(match[1]);
 
-  bot.sendMessage(chatId, `✅ Durasi mute default diubah menjadi ${DEFAULT_MUTE_DURATION} detik.`);
+  bot.sendMessage(chatId, `✅ Durasi mute default diubah menjadi ${DEFAULT_MUTE_DURATION} detik.`, {
+    ...(msg.message_thread_id && {
+      message_thread_id: msg.message_thread_id
+    })
+  });
 });
 
-// 🔒 Manual mute (reply ke pesan)
+// 🔒 Manual mute
 bot.onText(/\/mute (\d+)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const adminId = msg.from.id;
@@ -126,7 +159,11 @@ bot.onText(/\/mute (\d+)/, async (msg, match) => {
   }
 
   if (!msg.reply_to_message) {
-    return bot.sendMessage(chatId, "⚠️ Reply ke pesan user yang ingin dimute.");
+    return bot.sendMessage(chatId, "⚠️ Reply ke pesan user yang ingin dimute.", {
+      ...(msg.message_thread_id && {
+        message_thread_id: msg.message_thread_id
+      })
+    });
   }
 
   const targetId = msg.reply_to_message.from.id;
@@ -142,7 +179,11 @@ bot.onText(/\/unmute/, async (msg) => {
 
   const member = await bot.getChatMember(chatId, adminId);
   if (!["administrator", "creator"].includes(member.status)) {
-    return bot.sendMessage(chatId, "❌ Hanya admin.");
+    return bot.sendMessage(chatId, "❌ Hanya admin.", {
+      ...(msg.message_thread_id && {
+        message_thread_id: msg.message_thread_id
+      })
+    });
   }
 
   if (!msg.reply_to_message) {
