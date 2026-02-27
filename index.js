@@ -29,14 +29,23 @@ bot.on("message", async (msg) => {
 
   for (const member of msg.new_chat_members) {
     await bot.sendMessage(
-      chatId,
-      `👋 ${member.first_name}, selamat datang!\nSilakan baca aturan grup ya 🙌`,
-      {
-        ...(msg.message_thread_id && {
-          message_thread_id: msg.message_thread_id
-        })
-      }
-    );
+        chatId,
+        `✨ *WELCOME ${member.first_name}!*
+
+        ━━━━━━━━━━━━━━━
+        👤 Status : Member Baru
+        📖 Wajib   : Baca aturan
+        🚫 Dilarang: Spam & Link sembarangan
+        ━━━━━━━━━━━━━━━
+
+        Selamat bergabung dan semoga betah 🙌`,
+        {
+            parse_mode: "Markdown",
+            ...(msg.message_thread_id && {
+            message_thread_id: msg.message_thread_id
+            })
+        }
+        );
   }
 });
 
