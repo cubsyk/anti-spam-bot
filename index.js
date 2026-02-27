@@ -20,7 +20,7 @@ const TIME_WINDOW = 5000;
 const userMessages = {};
 
 // =======================
-// 🎉 JOIN NOTICE
+// 🎉 JOIN NOTICE (COMPACT)
 // =======================
 bot.on("message", async (msg) => {
   if (!msg.new_chat_members) return;
@@ -30,16 +30,8 @@ bot.on("message", async (msg) => {
   for (const member of msg.new_chat_members) {
     await bot.sendMessage(
       chatId,
-      `👋 *SELAMAT DATANG*
-
-\`\`\`
-User   : ${member.first_name}
-Status : Member Baru
-\`\`\`
-
-Harap baca aturan grup dan semoga betah 🙌`,
+      `👋 ${member.first_name}, selamat datang!\nSilakan baca aturan grup ya 🙌`,
       {
-        parse_mode: "Markdown",
         ...(msg.message_thread_id && {
           message_thread_id: msg.message_thread_id
         })
@@ -109,13 +101,7 @@ async function muteUser(chatId, userId, msg, reason, customDuration) {
 
   await bot.sendMessage(
     chatId,
-    `🚫 *PERINGATAN MODERASI*
-
-\`\`\`
-User   : ${msg.from.first_name}
-Durasi : ${duration} detik
-Alasan : ${reason}
-\`\`\``,
+    `🚫 *PERINGATAN MODERASI*\n\`\`\`\nUser : ${msg.from.first_name}\nDurasi: ${duration} detik\nAlasan: ${reason}\n\`\`\``,
     {
       parse_mode: "Markdown",
       ...(msg.message_thread_id && {
@@ -136,7 +122,11 @@ bot.onText(/\/setmute (\d+)/, async (msg, match) => {
 
   const member = await bot.getChatMember(chatId, userId);
   if (!["administrator", "creator"].includes(member.status)) {
-    return bot.sendMessage(chatId, "❌ Hanya admin yang bisa menggunakan perintah ini.");
+    return bot.sendMessage(chatId, "❌ Hanya admin.", {
+      ...(msg.message_thread_id && {
+        message_thread_id: msg.message_thread_id
+      })
+    });
   }
 
   DEFAULT_MUTE_DURATION = parseInt(match[1]);
@@ -155,7 +145,11 @@ bot.onText(/\/mute (\d+)/, async (msg, match) => {
 
   const member = await bot.getChatMember(chatId, adminId);
   if (!["administrator", "creator"].includes(member.status)) {
-    return bot.sendMessage(chatId, "❌ Hanya admin.");
+    return bot.sendMessage(chatId, "❌ Hanya admin.", {
+      ...(msg.message_thread_id && {
+        message_thread_id: msg.message_thread_id
+      })
+    });
   }
 
   if (!msg.reply_to_message) {
@@ -195,24 +189,20 @@ bot.onText(/\/unmute/, async (msg) => {
   }
 
   const targetId = msg.reply_to_message.from.id;
+  const targetName = msg.reply_to_message.from.first_name;
 
   await bot.restrictChatMember(chatId, targetId, {
     permissions: { can_send_messages: true },
   });
 
-    await bot.sendMessage(
+  await bot.sendMessage(
     chatId,
-    `👋 *Selamat Datang!*
-
-    \`\`\`
-    User : ${member.first_name}
-    \`\`\`
-    Silakan baca aturan grup ya 🙌`,
+    `✅ *UNMUTE BERHASIL*\n\`\`\`\nUser : ${targetName}\nStatus: Aktif kembali\n\`\`\``,
     {
-        parse_mode: "Markdown",
-        ...(msg.message_thread_id && {
+      parse_mode: "Markdown",
+      ...(msg.message_thread_id && {
         message_thread_id: msg.message_thread_id
-        })
+      })
     }
-    );
+  );
 });
