@@ -30,15 +30,13 @@ bot.on("message", async (msg) => {
   for (const member of msg.new_chat_members) {
     await bot.sendMessage(
         chatId,
-        `✨ *WELCOME ${member.first_name}!*
+        `👋 *WELCOME MEMBER BARU*
 
-        ━━━━━━━━━━━━━━━
-        👤 Status : Member Baru
-        📖 Wajib   : Baca aturan
-        🚫 Dilarang: Spam & Link sembarangan
-        ━━━━━━━━━━━━━━━
-
-        Selamat bergabung dan semoga betah 🙌`,
+        \`\`\`
+        User   : ${member.first_name}
+        Status : Bergabung
+        \`\`\`
+        Selamat bergabung dan patuhi aturan grup.`,
         {
             parse_mode: "Markdown",
             ...(msg.message_thread_id && {
