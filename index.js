@@ -200,13 +200,19 @@ bot.onText(/\/unmute/, async (msg) => {
     permissions: { can_send_messages: true },
   });
 
-  await bot.sendMessage(
+    await bot.sendMessage(
     chatId,
-    `✅ User ${msg.reply_to_message.from.first_name} berhasil di-unmute.`,
+    `👋 *Selamat Datang!*
+
+    \`\`\`
+    User : ${member.first_name}
+    \`\`\`
+    Silakan baca aturan grup ya 🙌`,
     {
-      ...(msg.message_thread_id && {
+        parse_mode: "Markdown",
+        ...(msg.message_thread_id && {
         message_thread_id: msg.message_thread_id
-      })
+        })
     }
-  );
+    );
 });
