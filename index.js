@@ -29,15 +29,14 @@ bot.on("message", async (msg) => {
     const groupName = msg.chat.title;
 
     for (const member of msg.new_chat_members) {
+
+      const username = member.username 
+        ? `@${member.username}` 
+        : "Tidak ada username";
+
       await bot.sendMessage(
         chatId,
-        `𝐇𝐚𝐥𝐨𝐨 ${member.first_name} 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝗧𝗼 𝐓𝐇𝐄 ${groupName}
-
-  User : -
-  Nama : ${member.first_name}
-  ID : ${member.id}
-  ↳ ꜱᴀʟɪɴɢ ʀᴇᴘʟᴀʏ ʏᴀ ᴀᴅɪᴋ ᴀᴅɪᴋ
-  ↳ ɢᴀᴋ ᴘᴀᴘᴀ ʙɪʀᴀʜɪ ᴛᴀᴘɪ ɴɢᴏᴛᴀᴋ ᴛᴏᴅ`,
+        `𝐇𝐚𝐥𝐨𝐨 ${member.first_name} 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝗧𝗼 ${groupName} User : ${username} Nama : ${member.first_name} ID : ${member.id} ↳ ꜱᴀʟɪɴɢ ʀᴇᴘʟᴀʏ ʏᴀ ᴀᴅɪᴋ ᴀᴅɪᴋ ↳ ɢᴀᴋ ᴘᴀᴘᴀ ʙɪʀᴀʜɪ ᴛᴀᴘɪ ɴɢᴏᴛᴀᴋ ᴛᴏᴅ`,
         {
           ...(msg.message_thread_id && {
             message_thread_id: msg.message_thread_id
