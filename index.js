@@ -22,33 +22,33 @@ const userMessages = {};
 // =======================
 // 🎉 JOIN NOTICE (COMPACT)
 // =======================
-  bot.on("message", async (msg) => {
-    if (!msg.new_chat_members) return;
+bot.on("message", async (msg) => {
+  if (!msg.new_chat_members) return;
 
-    const chatId = msg.chat.id;
-    const groupName = msg.chat.title;
+  const chatId = msg.chat.id;
+  const groupName = msg.chat.title;
 
-    for (const member of msg.new_chat_members) {
+  for (const member of msg.new_chat_members) {
 
-      const username = member.username
-        ? `@${member.username}`
-        : member.first_name;
+    const username = member.username
+      ? `@${member.username}`
+      : member.first_name;
 
-      await bot.sendMessage(
-        chatId,
-  `𝐇𝐚𝐥𝐨 ${username} 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝗧𝗼 ${groupName}
-  User: ${username}
-  Nama: ${member.first_name}
-  ID: ${member.id}
-  DILARANG SPAM & KIRIM LINK SEMBARANGAN YAA DIK`,
-        {
-          ...(msg.message_thread_id && {
-            message_thread_id: msg.message_thread_id
-          })
-        }
-      );
-    }
-  });
+    await bot.sendMessage(
+      chatId,
+`Halo ${username} WELCOME To ${groupName}
+User: ${username}
+Nama: ${member.first_name}
+ID: ${member.id}
+DILARANG SPAM & KIRIM LINK SEMBARANGAN YAA DEK`,
+      {
+        ...(msg.message_thread_id && {
+          message_thread_id: msg.message_thread_id
+        })
+      }
+    );
+  }
+});
 
 // =======================
 // MAIN LISTENER
