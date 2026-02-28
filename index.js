@@ -23,28 +23,28 @@ const userMessages = {};
 // 🎉 JOIN NOTICE (COMPACT)
 // =======================
 bot.on("message", async (msg) => {
-  if (!msg.new_chat_members) return;
+    if (!msg.new_chat_members) return;
 
-  const chatId = msg.chat.id;
+    const chatId = msg.chat.id;
+    const groupName = msg.chat.title;
 
-  for (const member of msg.new_chat_members) {
-    await bot.sendMessage(
+    for (const member of msg.new_chat_members) {
+      await bot.sendMessage(
         chatId,
-        `👋 *WELCOME MEMBER BARU*
+        `𝐇𝐚𝐥𝐨𝐨 ${member.first_name} 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝗧𝗼 𝐓𝐇𝐄 ${groupName}
 
-        \`\`\`
-        User   : ${member.first_name}
-        Status : Bergabung
-        \`\`\`
-        Selamat bergabung dan patuhi aturan grup.`,
+  User : -
+  Nama : ${member.first_name}
+  ID : ${member.id}
+  ↳ ꜱᴀʟɪɴɢ ʀᴇᴘʟᴀʏ ʏᴀ ᴀᴅɪᴋ ᴀᴅɪᴋ
+  ↳ ɢᴀᴋ ᴘᴀᴘᴀ ʙɪʀᴀʜɪ ᴛᴀᴘɪ ɴɢᴏᴛᴀᴋ ᴛᴏᴅ`,
         {
-            parse_mode: "Markdown",
-            ...(msg.message_thread_id && {
+          ...(msg.message_thread_id && {
             message_thread_id: msg.message_thread_id
-            })
+          })
         }
-        );
-  }
+      );
+    }
 });
 
 // =======================
