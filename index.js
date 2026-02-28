@@ -30,18 +30,20 @@ bot.on("message", async (msg) => {
 
   for (const member of msg.new_chat_members) {
 
-    const username = member.username
+    const mentionUser = member.username
       ? `@${member.username}`
-      : member.first_name;
+      : `[${member.first_name}](tg://user?id=${member.id})`;
 
     await bot.sendMessage(
       chatId,
-`Halo ${username} WELCOME To ${groupName}
-User: ${username}
+`𝐇𝐚𝐥𝐨 ${member.first_name} 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝗧𝗼 ${groupName}
+User: ${mentionUser}
 Nama: ${member.first_name}
 ID: ${member.id}
 DILARANG SPAM & KIRIM LINK SEMBARANGAN YAA DEK`,
       {
+        parse_mode: "Markdown",
+        disable_web_page_preview: true,
         ...(msg.message_thread_id && {
           message_thread_id: msg.message_thread_id
         })
