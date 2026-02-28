@@ -22,7 +22,7 @@ const userMessages = {};
 // =======================
 // 🎉 JOIN NOTICE (COMPACT)
 // =======================
-bot.on("message", async (msg) => {
+  bot.on("message", async (msg) => {
     if (!msg.new_chat_members) return;
 
     const chatId = msg.chat.id;
@@ -30,18 +30,17 @@ bot.on("message", async (msg) => {
 
     for (const member of msg.new_chat_members) {
 
-      const username = member.username 
-        ? `@${member.username}` 
-        : "-";
+      const username = member.username
+        ? `@${member.username}`
+        : member.first_name;
 
       await bot.sendMessage(
         chatId,
-        `𝐇𝐚𝐥𝐨𝐨 ${member.first_name} 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝗧𝗼 ${groupName}
-          User : ${username}
-          Nama : ${member.first_name}
-          ID : ${member.id}
-          ↳ ꜱᴀʟɪɴɢ ʀᴇᴘʟᴀʏ ʏᴀ ᴀᴅɪᴋ ᴀᴅɪᴋ
-          ↳ ɢᴀᴋ ᴘᴀᴘᴀ ʙɪʀᴀʜɪ ᴛᴀᴘɪ ɴɢᴏᴛᴀᴋ ᴛᴏᴅ`,
+  `𝐇𝐚𝐥𝐨 ${username} 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝗧𝗼 ${groupName}
+  User: ${username}
+  Nama: ${member.first_name}
+  ID: ${member.id}
+  DILARANG SPAM & KIRIM LINK SEMBARANGAN YAA DIK`,
         {
           ...(msg.message_thread_id && {
             message_thread_id: msg.message_thread_id
@@ -49,7 +48,7 @@ bot.on("message", async (msg) => {
         }
       );
     }
-});
+  });
 
 // =======================
 // MAIN LISTENER
