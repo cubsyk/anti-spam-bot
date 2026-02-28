@@ -38,7 +38,6 @@ bot.on("message", async (msg) => {
       chatId,
 `𝐇𝐚𝐥𝐨 ${member.first_name} 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝗧𝗼 ${groupName}
 User: ${mentionUser}
-Nama: ${member.first_name}
 ID: ${member.id}
 DILARANG SPAM & KIRIM LINK SEMBARANGAN YAA DEK`,
       {
