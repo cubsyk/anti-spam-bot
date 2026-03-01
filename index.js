@@ -22,6 +22,12 @@ const userMessages = {};
 // =======================
 // 🎉 JOIN NOTICE (COMPACT)
 // =======================
+// =======================
+// 🎉 JOIN NOTICE (AUTO DELETE PREVIOUS)
+// =======================
+
+let lastWelcomeMessage = {};
+
 bot.on("message", async (msg) => {
   if (!msg.new_chat_members) return;
 
@@ -34,7 +40,17 @@ bot.on("message", async (msg) => {
       ? `@${member.username}`
       : `[${member.first_name}](tg://user?id=${member.id})`;
 
-    await bot.sendMessage(
+    try {
+      // 🔥 Hapus welcome sebelumnya kalau ada
+      if (lastWelcomeMessage[chatId]) {
+        await bot.deleteMessage(chatId, lastWelcomeMessage[chatId]);
+      }
+    } catch (err) {
+      // abaikan kalau gagal hapus
+    }
+
+    // 🔥 Kirim welcome baru
+    const sentMessage = await bot.sendMessage(
       chatId,
 `𝐇𝐚𝐥𝐨 ${member.first_name} 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝗧𝗼 ${groupName}
 User: ${mentionUser}
@@ -48,6 +64,9 @@ DILARANG SPAM & KIRIM LINK SEMBARANGAN YAA DEK`,
         })
       }
     );
+
+    // 🔥 Simpan ID pesan terakhir
+    lastWelcomeMessage[chatId] = sentMessage.message_id;
   }
 });
 
