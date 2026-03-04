@@ -216,35 +216,6 @@ Alasan: ${reason}
 }
 
 // =======================
-// UNMUTE FUNCTION
-// =======================
-async function unmuteUser(chatId, userId) {
-
-  // Reset paksa permission user ke default grup
-  await bot.restrictChatMember(chatId, userId, {
-    permissions: {
-      can_send_messages: true,
-      can_send_audios: true,
-      can_send_documents: true,
-      can_send_photos: true,
-      can_send_videos: true,
-      can_send_video_notes: true,
-      can_send_voice_notes: true,
-      can_send_polls: true,
-      can_send_other_messages: true,
-      can_add_web_page_previews: true,
-      can_change_info: true,
-      can_invite_users: true,
-      can_pin_messages: true,
-    }
-  });
-
-  // Paksa Telegram sync ulang permission user
-  await bot.unbanChatMember(chatId, userId, { only_if_banned: true });
-
-}
-
-// =======================
 // COMMAND .setmute
 // =======================
 bot.onText(/^\.setmute (\d+)$/, async (msg, match) => {
@@ -295,12 +266,10 @@ bot.onText(/^\.mute (\d+)$/, async (msg, match) => {
   const targetMember = await bot.getChatMember(chatId, targetId);
   const targetStatus = targetMember.status;
 
-  // Owner tidak bisa dimute siapapun
   if (targetStatus === "creator") {
     return bot.sendMessage(chatId, "❌ Tidak bisa mute owner.");
   }
 
-  // Hanya owner yang bisa mute admin
   if (targetStatus === "administrator" && callerStatus !== "creator") {
     return bot.sendMessage(chatId, "❌ Hanya owner yang bisa mute admin.");
   }
@@ -319,63 +288,6 @@ bot.onText(/^\.mute (\d+)$/, async (msg, match) => {
     "Mute manual oleh admin.",
     duration
   );
-
-});
-
-// =======================
-// COMMAND .unmute
-// =======================
-bot.onText(/^\.unmute$/, async (msg) => {
-
-  const chatId = msg.chat.id;
-  const callerId = msg.from.id;
-
-  const callerMember = await bot.getChatMember(chatId, callerId);
-  const callerStatus = callerMember.status;
-
-  if (!["administrator", "creator"].includes(callerStatus)) {
-    return bot.sendMessage(chatId, "❌ Hanya admin.");
-  }
-
-  if (!msg.reply_to_message) {
-    return bot.sendMessage(chatId, "⚠️ Reply pesan user yang ingin di-unmute.");
-  }
-
-  const targetId = msg.reply_to_message.from.id;
-  const targetMember = await bot.getChatMember(chatId, targetId);
-  const targetStatus = targetMember.status;
-
-  if (targetStatus === "creator") {
-    return bot.sendMessage(chatId, "❌ Owner tidak perlu di-unmute.");
-  }
-
-  // Hanya owner yang bisa unmute admin
-  if (targetStatus === "administrator" && callerStatus !== "creator") {
-    return bot.sendMessage(chatId, "❌ Hanya owner yang bisa unmute admin.");
-  }
-
-  const name = escapeMarkdown(msg.reply_to_message.from.first_name);
-
-  try {
-
-    await unmuteUser(chatId, targetId);
-
-    await bot.sendMessage(
-      chatId,
-`✅ *UNMUTE BERHASIL*
-\`\`\`
-User  : ${name}
-Status: Sudah bisa mengirim pesan
-\`\`\``,
-      { parse_mode: "Markdown" }
-    );
-
-  } catch (err) {
-
-    console.log("UNMUTE ERROR:", err.message);
-    bot.sendMessage(chatId, "❌ Gagal unmute user.");
-
-  }
 
 });
 
@@ -406,7 +318,6 @@ bot.onText(/^\.kick$/, async (msg) => {
     return bot.sendMessage(chatId, "❌ Tidak bisa kick owner.");
   }
 
-  // Hanya owner yang bisa kick admin
   if (targetStatus === "administrator" && callerStatus !== "creator") {
     return bot.sendMessage(chatId, "❌ Hanya owner yang bisa kick admin.");
   }
