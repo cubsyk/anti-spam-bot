@@ -220,6 +220,7 @@ Alasan: ${reason}
 // =======================
 async function unmuteUser(chatId, userId) {
 
+  // Reset paksa permission user ke default grup
   await bot.restrictChatMember(chatId, userId, {
     permissions: {
       can_send_messages: true,
@@ -236,8 +237,10 @@ async function unmuteUser(chatId, userId) {
       can_invite_users: true,
       can_pin_messages: true,
     }
-    // ✅ Hapus until_date sama sekali, jangan pakai 0
   });
+
+  // Paksa Telegram sync ulang permission user
+  await bot.unbanChatMember(chatId, userId, { only_if_banned: true });
 
 }
 
