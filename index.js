@@ -8,6 +8,13 @@ const bot = new TelegramBot(process.env.BOT_TOKEN, {
 console.log("Bot berjalan...");
 
 // =======================
+// ERROR HANDLER (ANTI CRASH)
+// =======================
+bot.on("polling_error", console.error);
+process.on("unhandledRejection", console.error);
+process.on("uncaughtException", console.error);
+
+// =======================
 // CONFIG
 // =======================
 let ANTI_LINK = true;
@@ -18,41 +25,45 @@ const SPAM_LIMIT = 5;
 const TIME_WINDOW = 5000;
 
 const userMessages = {};
-
-// =======================
-// 🎉 JOIN NOTICE (COMPACT)
-// =======================
-// =======================
-// 🎉 JOIN NOTICE (AUTO DELETE PREVIOUS)
-// =======================
-
 let lastWelcomeMessage = {};
 
+// =======================
+// ESCAPE MARKDOWN
+// =======================
+function escapeMarkdown(text) {
+  if (!text) return "";
+  return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
+}
+
+// =======================
+// 🎉 JOIN NOTICE
+// =======================
 bot.on("message", async (msg) => {
+
   if (!msg.new_chat_members) return;
 
   const chatId = msg.chat.id;
-  const groupName = msg.chat.title;
+  const groupName = escapeMarkdown(msg.chat.title);
 
   for (const member of msg.new_chat_members) {
 
+    const firstName = escapeMarkdown(member.first_name);
+
     const mentionUser = member.username
-      ? `@${member.username}`
-      : `[${member.first_name}](tg://user?id=${member.id})`;
+      ? `@${escapeMarkdown(member.username)}`
+      : `[${firstName}](tg://user?id=${member.id})`;
 
     try {
-      // 🔥 Hapus welcome sebelumnya kalau ada
+
       if (lastWelcomeMessage[chatId]) {
         await bot.deleteMessage(chatId, lastWelcomeMessage[chatId]);
       }
-    } catch (err) {
-      // abaikan kalau gagal hapus
-    }
 
-    // 🔥 Kirim welcome baru
+    } catch {}
+
     const sentMessage = await bot.sendMessage(
       chatId,
-`𝐇𝐚𝐥𝐨 ${member.first_name} 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝗧𝗼 ${groupName}
+`𝐇𝐚𝐥𝐨 ${firstName} 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝗧𝗼 ${groupName}
 User: ${mentionUser}
 ID: ${member.id}
 JANGAN SPAM & KIRIM LINK SEMBARANGAN YAA`,
@@ -65,8 +76,8 @@ JANGAN SPAM & KIRIM LINK SEMBARANGAN YAA`,
       }
     );
 
-    // 🔥 Simpan ID pesan terakhir
     lastWelcomeMessage[chatId] = sentMessage.message_id;
+
   }
 });
 
@@ -74,6 +85,7 @@ JANGAN SPAM & KIRIM LINK SEMBARANGAN YAA`,
 // MAIN LISTENER
 // =======================
 bot.on("message", async (msg) => {
+
   if (!msg.text || !msg.from || msg.chat.type === "private") return;
 
   const chatId = msg.chat.id;
@@ -81,22 +93,38 @@ bot.on("message", async (msg) => {
   const now = Date.now();
 
   try {
+
     const member = await bot.getChatMember(chatId, userId);
     if (["administrator", "creator"].includes(member.status)) return;
 
-    // 🔥 ANTI LINK
+    // ===================
+    // ANTI LINK
+    // ===================
     if (ANTI_LINK) {
+
       const linkRegex = /(https?:\/\/|t\.me|www\.)/i;
 
       if (linkRegex.test(msg.text)) {
+
         await bot.deleteMessage(chatId, msg.message_id);
-        await muteUser(chatId, userId, msg, "Mengirim link tidak diperbolehkan.");
+
+        await muteUser(
+          chatId,
+          userId,
+          msg,
+          "Mengirim link tidak diperbolehkan."
+        );
+
         return;
+
       }
     }
 
-    // 🔥 ANTI SPAM
+    // ===================
+    // ANTI SPAM
+    // ===================
     if (ANTI_SPAM) {
+
       if (!userMessages[userId]) {
         userMessages[userId] = [];
       }
@@ -108,19 +136,30 @@ bot.on("message", async (msg) => {
       );
 
       if (userMessages[userId].length > SPAM_LIMIT) {
-        await muteUser(chatId, userId, msg, "Terlalu banyak pesan (spam).");
+
+        await muteUser(
+          chatId,
+          userId,
+          msg,
+          "Terlalu banyak pesan (spam)."
+        );
+
       }
+
     }
 
   } catch (err) {
+
     console.log("ERROR:", err.response?.body || err.message);
+
   }
 });
 
 // =======================
-// 🔒 AUTO MUTE FUNCTION
+// AUTO MUTE
 // =======================
 async function muteUser(chatId, userId, msg, reason, customDuration) {
+
   const duration = customDuration || DEFAULT_MUTE_DURATION;
   const until = Math.floor(Date.now() / 1000) + duration;
 
@@ -129,9 +168,16 @@ async function muteUser(chatId, userId, msg, reason, customDuration) {
     until_date: until,
   });
 
+  const name = escapeMarkdown(msg.from.first_name);
+
   await bot.sendMessage(
     chatId,
-    `🚫 *PERINGATAN MODERASI*\n\`\`\`\nUser : ${msg.from.first_name}\nMuted: ${duration} detik\nAlasan: ${reason}\n\`\`\``,
+`🚫 *PERINGATAN MODERASI*
+\`\`\`
+User : ${name}
+Muted: ${duration} detik
+Alasan: ${reason}
+\`\`\``,
     {
       parse_mode: "Markdown",
       ...(msg.message_thread_id && {
@@ -142,84 +188,85 @@ async function muteUser(chatId, userId, msg, reason, customDuration) {
 }
 
 // =======================
-// 👮 ADMIN COMMANDS
+// SET MUTE
 // =======================
-
-// 🔧 Set default mute
 bot.onText(/\/setmute (\d+)/, async (msg, match) => {
+
   const chatId = msg.chat.id;
   const userId = msg.from.id;
 
   const member = await bot.getChatMember(chatId, userId);
+
   if (!["administrator", "creator"].includes(member.status)) {
-    return bot.sendMessage(chatId, "❌ Hanya admin.", {
-      ...(msg.message_thread_id && {
-        message_thread_id: msg.message_thread_id
-      })
-    });
+    return bot.sendMessage(chatId, "❌ Hanya admin.");
   }
 
   DEFAULT_MUTE_DURATION = parseInt(match[1]);
 
-  bot.sendMessage(chatId, `✅ Durasi mute default diubah menjadi ${DEFAULT_MUTE_DURATION} detik.`, {
-    ...(msg.message_thread_id && {
-      message_thread_id: msg.message_thread_id
-    })
-  });
+  bot.sendMessage(
+    chatId,
+    `✅ Durasi mute default diubah menjadi ${DEFAULT_MUTE_DURATION} detik.`
+  );
+
 });
 
-// 🔒 Manual mute
+// =======================
+// MANUAL MUTE
+// =======================
 bot.onText(/\/mute (\d+)/, async (msg, match) => {
+
   const chatId = msg.chat.id;
   const adminId = msg.from.id;
 
   const member = await bot.getChatMember(chatId, adminId);
+
   if (!["administrator", "creator"].includes(member.status)) {
-    return bot.sendMessage(chatId, "❌ Hanya admin.", {
-      ...(msg.message_thread_id && {
-        message_thread_id: msg.message_thread_id
-      })
-    });
+    return bot.sendMessage(chatId, "❌ Hanya admin.");
   }
 
   if (!msg.reply_to_message) {
-    return bot.sendMessage(chatId, "⚠️ Reply ke pesan user yang ingin dimute.", {
-      ...(msg.message_thread_id && {
-        message_thread_id: msg.message_thread_id
-      })
-    });
+    return bot.sendMessage(
+      chatId,
+      "⚠️ Reply ke pesan user yang ingin dimute."
+    );
   }
 
   const targetId = msg.reply_to_message.from.id;
   const duration = parseInt(match[1]);
 
-  await muteUser(chatId, targetId, msg.reply_to_message, "Mute manual oleh admin.", duration);
+  await muteUser(
+    chatId,
+    targetId,
+    msg.reply_to_message,
+    "Mute manual oleh admin.",
+    duration
+  );
+
 });
 
-// 🔓 Unmute
+// =======================
+// UNMUTE
+// =======================
 bot.onText(/\/unmute/, async (msg) => {
+
   const chatId = msg.chat.id;
   const adminId = msg.from.id;
 
   const member = await bot.getChatMember(chatId, adminId);
+
   if (!["administrator", "creator"].includes(member.status)) {
-    return bot.sendMessage(chatId, "❌ Hanya admin.", {
-      ...(msg.message_thread_id && {
-        message_thread_id: msg.message_thread_id
-      })
-    });
+    return bot.sendMessage(chatId, "❌ Hanya admin.");
   }
 
   if (!msg.reply_to_message) {
-    return bot.sendMessage(chatId, "⚠️ Reply ke pesan user yang ingin di-unmute.", {
-      ...(msg.message_thread_id && {
-        message_thread_id: msg.message_thread_id
-      })
-    });
+    return bot.sendMessage(
+      chatId,
+      "⚠️ Reply ke pesan user yang ingin di-unmute."
+    );
   }
 
   const targetId = msg.reply_to_message.from.id;
-  const targetName = msg.reply_to_message.from.first_name;
+  const targetName = escapeMarkdown(msg.reply_to_message.from.first_name);
 
   await bot.restrictChatMember(chatId, targetId, {
     permissions: { can_send_messages: true },
@@ -227,12 +274,14 @@ bot.onText(/\/unmute/, async (msg) => {
 
   await bot.sendMessage(
     chatId,
-    `✅ *UNMUTE BERHASIL*\n\`\`\`\nUser : ${targetName}\nStatus: Aktif kembali\n\`\`\``,
+`✅ *UNMUTE BERHASIL*
+\`\`\`
+User : ${targetName}
+Status: Aktif kembali
+\`\`\``,
     {
-      parse_mode: "Markdown",
-      ...(msg.message_thread_id && {
-        message_thread_id: msg.message_thread_id
-      })
+      parse_mode: "Markdown"
     }
   );
+
 });
