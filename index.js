@@ -182,13 +182,12 @@ bot.on("message", async (msg) => {
 async function muteUser(chatId,userId,msg,reason,customDuration){
 
   const duration = customDuration || DEFAULT_MUTE_DURATION;
-  const until = Math.floor(Date.now()/1000)+duration;
 
+  // MUTE USER
   await bot.restrictChatMember(chatId,userId,{
     permissions:{
       can_send_messages:false
-    },
-    until_date:until
+    }
   });
 
   const name = escapeMarkdown(msg.from.first_name);
@@ -208,17 +207,14 @@ Alasan: ${reason}
 { parse_mode:"Markdown" }
   );
 
-  // AUTO UNMUTE
+  // AUTO UNMUTE (STABIL)
   setTimeout(async ()=>{
 
     try{
 
       await bot.restrictChatMember(chatId,userId,{
         permissions:{
-          can_send_messages:true,
-          can_send_media_messages:true,
-          can_send_other_messages:true,
-          can_add_web_page_previews:true
+          can_send_messages:true
         }
       });
 
@@ -227,30 +223,8 @@ Alasan: ${reason}
     }
 
   },duration*1000);
+
 }
-
-// =======================
-// COMMAND .SETMUTE
-// =======================
-bot.onText(/^\.setmute (\d+)/, async (msg,match)=>{
-
-  const chatId = msg.chat.id;
-  const adminId = msg.from.id;
-
-  const member = await bot.getChatMember(chatId, adminId);
-
-  if (!["administrator","creator"].includes(member.status)) {
-    return bot.sendMessage(chatId,"❌ Hanya admin.");
-  }
-
-  DEFAULT_MUTE_DURATION = parseInt(match[1]);
-
-  bot.sendMessage(
-    chatId,
-`Durasi mute diubah menjadi ${DEFAULT_MUTE_DURATION} detik`
-  );
-
-});
 
 // =======================
 // COMMAND .MUTE
@@ -298,7 +272,7 @@ bot.onText(/^\.mute (\d+)/, async (msg,match)=>{
 // =======================
 // COMMAND .KICK
 // =======================
-bot.onText(/^\.kick/, async (msg)=>{
+bot.onText(/^\.kick$/, async (msg)=>{
 
   const chatId = msg.chat.id;
   const adminId = msg.from.id;
