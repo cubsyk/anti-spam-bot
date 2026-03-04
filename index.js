@@ -179,13 +179,23 @@ bot.on("message", async (msg) => {
 // =======================
 // MUTE FUNCTION
 // =======================
-async function muteUser(chatId,userId,msg,reason,customDuration){
+// simpan timer mute agar tidak dobel
+const muteTimers = new Map();
+
+async function muteUser(chatId, userId, msg, reason, customDuration) {
 
   const duration = customDuration || DEFAULT_MUTE_DURATION;
 
-  await bot.restrictChatMember(chatId,userId,{
-    permissions:{
-      can_send_messages:false
+  // jika sudah ada timer mute, hapus dulu (biar tidak bentrok)
+  const key = `${chatId}:${userId}`;
+  if (muteTimers.has(key)) {
+    clearTimeout(muteTimers.get(key));
+  }
+
+  // mute user
+  await bot.restrictChatMember(chatId, userId, {
+    permissions: {
+      can_send_messages: false
     }
   });
 
@@ -203,37 +213,37 @@ Muted: ${duration} detik
 Sampai: ${untilFormatted}
 Alasan: ${reason}
 \`\`\``,
-{ parse_mode:"Markdown" }
+    { parse_mode: "Markdown" }
   );
 
-  setTimeout(async ()=>{
-
-    try{
-
-      await bot.restrictChatMember(chatId,userId,{
-        permissions:{
-          can_send_messages:true,
-          can_send_audios:true,
-          can_send_documents:true,
-          can_send_photos:true,
-          can_send_videos:true,
-          can_send_video_notes:true,
-          can_send_voice_notes:true,
-          can_send_polls:true,
-          can_send_other_messages:true,
-          can_add_web_page_previews:true,
-          can_invite_users:true
+  // timer auto unmute
+  const timer = setTimeout(async () => {
+    try {
+      await bot.restrictChatMember(chatId, userId, {
+        permissions: {
+          can_send_messages: true,
+          can_send_audios: true,
+          can_send_documents: true,
+          can_send_photos: true,
+          can_send_videos: true,
+          can_send_video_notes: true,
+          can_send_voice_notes: true,
+          can_send_polls: true,
+          can_send_other_messages: true,
+          can_add_web_page_previews: true,
+          can_invite_users: true
         }
       });
 
-      console.log("User auto unmuted");
+      console.log(`Auto unmute ${userId}`);
+      muteTimers.delete(key);
 
-    }catch(err){
-      console.log("Auto unmute error:",err.message);
+    } catch (err) {
+      console.log("Auto unmute error:", err.message);
     }
+  }, duration * 1000);
 
-  },duration*1000);
-
+  muteTimers.set(key, timer);
 }
 
 // =======================
