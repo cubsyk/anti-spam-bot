@@ -220,31 +220,24 @@ Alasan: ${reason}
 // =======================
 async function unmuteUser(chatId, userId) {
 
-  try {
-    const result = await bot.restrictChatMember(chatId, userId, {
-      permissions: {
-        can_send_messages: true,
-        can_send_audios: true,
-        can_send_documents: true,
-        can_send_photos: true,
-        can_send_videos: true,
-        can_send_video_notes: true,
-        can_send_voice_notes: true,
-        can_send_polls: true,
-        can_send_other_messages: true,
-        can_add_web_page_previews: true,
-        can_change_info: false,
-        can_invite_users: true,
-        can_pin_messages: false,
-      },
-      until_date: 0
-    });
-
-    console.log("UNMUTE RESULT:", JSON.stringify(result));
-
-  } catch (err) {
-    console.log("UNMUTE ERROR DETAIL:", JSON.stringify(err.response?.body));
-  }
+  await bot.restrictChatMember(chatId, userId, {
+    permissions: {
+      can_send_messages: true,
+      can_send_audios: true,
+      can_send_documents: true,
+      can_send_photos: true,
+      can_send_videos: true,
+      can_send_video_notes: true,
+      can_send_voice_notes: true,
+      can_send_polls: true,
+      can_send_other_messages: true,
+      can_add_web_page_previews: true,
+      can_change_info: true,
+      can_invite_users: true,
+      can_pin_messages: true,
+    }
+    // ✅ Hapus until_date sama sekali, jangan pakai 0
+  });
 
 }
 
