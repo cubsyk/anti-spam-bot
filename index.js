@@ -200,11 +200,19 @@ async function muteUser(chatId,userId,msg,reason,customDuration){
 
   await bot.sendMessage(
     chatId,
-`PERINGATAN MODERASI
+`🚫 *PERINGATAN MODERASI*
+\`\`\`
 User : ${name}
 Muted: ${duration} detik
 Sampai: ${untilFormatted}
-Alasan: ${reason}`
+Alasan: ${reason}
+\`\`\``,
+{
+  parse_mode: "Markdown",
+  ...(msg.message_thread_id && {
+    message_thread_id: msg.message_thread_id
+  })
+}
   );
 
 }
