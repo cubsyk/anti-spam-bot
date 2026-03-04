@@ -235,7 +235,8 @@ async function unmuteUser(chatId, userId) {
       can_change_info: false,
       can_invite_users: true,
       can_pin_messages: false,
-    }
+    },
+    until_date: 0
   });
 
 }
