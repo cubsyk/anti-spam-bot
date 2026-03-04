@@ -19,7 +19,6 @@ let ANTI_LINK = true;
 let ANTI_SPAM = true;
 
 let DEFAULT_MUTE_DURATION = 60;
-let WARNING_DELETE_TIME = 15000;
 
 const SPAM_LIMIT = 5;
 const TIME_WINDOW = 5000;
@@ -199,7 +198,7 @@ async function muteUser(chatId,userId,msg,reason,customDuration){
   const untilDate = Date.now() + duration * 1000;
   const untilFormatted = formatDateTime(untilDate);
 
-  const warn = await bot.sendMessage(
+  await bot.sendMessage(
     chatId,
 `PERINGATAN MODERASI
 User : ${name}
@@ -207,10 +206,6 @@ Muted: ${duration} detik
 Sampai: ${untilFormatted}
 Alasan: ${reason}`
   );
-
-  setTimeout(()=>{
-    bot.deleteMessage(chatId,warn.message_id).catch(()=>{});
-  }, WARNING_DELETE_TIME);
 
 }
 
