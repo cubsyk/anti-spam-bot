@@ -265,8 +265,14 @@ bot.onText(/^\.mute (\d+)/, async (msg,match)=>{
   const targetId = msg.reply_to_message.from.id;
   const targetMember = await bot.getChatMember(chatId,targetId);
 
-  if(targetMember.status === "creator"){
+  // ADMIN tidak boleh mute owner
+  if(adminMember.status !== "creator" && targetMember.status === "creator"){
     return bot.sendMessage(chatId,"❌ Tidak bisa mute owner.");
+  }
+
+  // ADMIN tidak boleh mute admin lain
+  if(adminMember.status !== "creator" && targetMember.status === "administrator"){
+    return bot.sendMessage(chatId,"❌ Admin tidak bisa mute admin lain.");
   }
 
   const duration = parseInt(match[1]);
@@ -302,8 +308,14 @@ bot.onText(/^\.kick/, async (msg)=>{
   const targetId = msg.reply_to_message.from.id;
   const targetMember = await bot.getChatMember(chatId,targetId);
 
-  if(targetMember.status === "creator"){
+  // ADMIN tidak boleh kick owner
+  if(adminMember.status !== "creator" && targetMember.status === "creator"){
     return bot.sendMessage(chatId,"❌ Tidak bisa kick owner.");
+  }
+
+  // ADMIN tidak boleh kick admin lain
+  if(adminMember.status !== "creator" && targetMember.status === "administrator"){
+    return bot.sendMessage(chatId,"❌ Admin tidak bisa kick admin lain.");
   }
 
   await bot.banChatMember(chatId,targetId);
