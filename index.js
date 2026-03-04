@@ -185,7 +185,9 @@ async function muteUser(chatId,userId,msg,reason,customDuration){
   const until = Math.floor(Date.now()/1000)+duration;
 
   await bot.restrictChatMember(chatId,userId,{
-    permissions:{ can_send_messages:false },
+    permissions:{
+      can_send_messages:false
+    },
     until_date:until
   });
 
@@ -203,22 +205,28 @@ Muted: ${duration} detik
 Sampai: ${untilFormatted}
 Alasan: ${reason}
 \`\`\``,
-{
-  parse_mode: "Markdown"
-}
+{ parse_mode:"Markdown" }
   );
 
   // AUTO UNMUTE
-  setTimeout(async () => {
+  setTimeout(async ()=>{
 
-    try {
+    try{
+
       await bot.restrictChatMember(chatId,userId,{
-        permissions:{ can_send_messages:true }
+        permissions:{
+          can_send_messages:true,
+          can_send_media_messages:true,
+          can_send_other_messages:true,
+          can_add_web_page_previews:true
+        }
       });
-    } catch {}
 
-  }, duration * 1000);
+    }catch(err){
+      console.log("Auto unmute error:",err.message);
+    }
 
+  },duration*1000);
 }
 
 // =======================
