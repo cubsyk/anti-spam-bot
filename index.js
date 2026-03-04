@@ -266,12 +266,19 @@ bot.onText(/^\.mute (\d+)$/, async (msg, match) => {
   const targetMember = await bot.getChatMember(chatId, targetId);
   const targetStatus = targetMember.status;
 
+  // Admin coba mute owner
   if (targetStatus === "creator") {
     return bot.sendMessage(chatId, "❌ Tidak bisa mute owner.");
   }
 
-  if (targetStatus === "administrator" && callerStatus !== "creator") {
-    return bot.sendMessage(chatId, "❌ Hanya owner yang bisa mute admin.");
+  // Owner coba mute admin
+  if (targetStatus === "administrator" && callerStatus === "creator") {
+    return bot.sendMessage(chatId, "Jangan jahat bang 😭🙏");
+  }
+
+  // Admin coba mute sesama admin
+  if (targetStatus === "administrator" && callerStatus === "administrator") {
+    return bot.sendMessage(chatId, "❌ Tidak bisa mute sesama admin.");
   }
 
   let duration = parseInt(match[1]);
@@ -314,12 +321,19 @@ bot.onText(/^\.kick$/, async (msg) => {
   const targetMember = await bot.getChatMember(chatId, targetId);
   const targetStatus = targetMember.status;
 
+  // Admin coba kick owner
   if (targetStatus === "creator") {
     return bot.sendMessage(chatId, "❌ Tidak bisa kick owner.");
   }
 
-  if (targetStatus === "administrator" && callerStatus !== "creator") {
-    return bot.sendMessage(chatId, "❌ Hanya owner yang bisa kick admin.");
+  // Owner coba kick admin
+  if (targetStatus === "administrator" && callerStatus === "creator") {
+    return bot.sendMessage(chatId, "Jangan jahat bang 😭🙏");
+  }
+
+  // Admin coba kick sesama admin
+  if (targetStatus === "administrator" && callerStatus === "administrator") {
+    return bot.sendMessage(chatId, "❌ Tidak bisa kick sesama admin.");
   }
 
   const name = escapeMarkdown(msg.reply_to_message.from.first_name);
