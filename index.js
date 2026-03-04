@@ -107,9 +107,6 @@ bot.on("message", async (msg) => {
 
   if (!msg.text || msg.chat.type === "private") return;
 
-  // 🔥 Abaikan command
-  if (msg.text.startsWith(".")) return;
-
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const now = Date.now();
@@ -177,17 +174,16 @@ bot.on("message", async (msg) => {
 });
 
 // =======================
-// MUTE FUNCTION
+// AUTO MUTE FUNCTION
 // =======================
 async function muteUser(chatId,userId,msg,reason,customDuration){
 
   const duration = customDuration || DEFAULT_MUTE_DURATION;
+  const until = Math.floor(Date.now()/1000)+duration;
 
-  // MUTE USER
   await bot.restrictChatMember(chatId,userId,{
-    permissions:{
-      can_send_messages:false
-    }
+    permissions:{ can_send_messages:false },
+    until_date:until
   });
 
   const name = escapeMarkdown(msg.from.first_name);
@@ -204,32 +200,53 @@ Muted: ${duration} detik
 Sampai: ${untilFormatted}
 Alasan: ${reason}
 \`\`\``,
-{ parse_mode:"Markdown" }
+{
+  parse_mode: "Markdown"
+}
   );
 
-  // AUTO UNMUTE (STABIL)
-  setTimeout(async ()=>{
+  // AUTO UNMUTE
+  setTimeout(async () => {
 
-    try{
+    try {
 
       await bot.restrictChatMember(chatId,userId,{
-        permissions:{
-          can_send_messages:true
-        }
+        permissions:{ can_send_messages:true }
       });
 
-    }catch(err){
-      console.log("Auto unmute error:",err.message);
-    }
+    } catch {}
 
-  },duration*1000);
+  }, duration * 1000);
 
 }
 
 // =======================
-// COMMAND .MUTE
+// COMMAND SETMUTE
 // =======================
-bot.onText(/^\.mute (\d+)/, async (msg,match)=>{
+bot.onText(/\/setmute (\d+)/, async (msg,match)=>{
+
+  const chatId = msg.chat.id;
+  const adminId = msg.from.id;
+
+  const member = await bot.getChatMember(chatId, adminId);
+
+  if (!["administrator","creator"].includes(member.status)) {
+    return bot.sendMessage(chatId,"❌ Hanya admin.");
+  }
+
+  DEFAULT_MUTE_DURATION = parseInt(match[1]);
+
+  bot.sendMessage(
+    chatId,
+`Durasi mute diubah menjadi ${DEFAULT_MUTE_DURATION} detik`
+  );
+
+});
+
+// =======================
+// COMMAND MUTE
+// =======================
+bot.onText(/\/mute (\d+)/, async (msg,match)=>{
 
   const chatId = msg.chat.id;
   const adminId = msg.from.id;
@@ -247,14 +264,9 @@ bot.onText(/^\.mute (\d+)/, async (msg,match)=>{
   const targetId = msg.reply_to_message.from.id;
   const targetMember = await bot.getChatMember(chatId,targetId);
 
-  // ADMIN tidak boleh mute owner
-  if(adminMember.status !== "creator" && targetMember.status === "creator"){
+  // ADMIN TIDAK BOLEH MUTE OWNER
+  if(targetMember.status === "creator"){
     return bot.sendMessage(chatId,"❌ Tidak bisa mute owner.");
-  }
-
-  // ADMIN tidak boleh mute admin lain
-  if(adminMember.status !== "creator" && targetMember.status === "administrator"){
-    return bot.sendMessage(chatId,"❌ Admin tidak bisa mute admin lain.");
   }
 
   const duration = parseInt(match[1]);
@@ -270,9 +282,9 @@ bot.onText(/^\.mute (\d+)/, async (msg,match)=>{
 });
 
 // =======================
-// COMMAND .KICK
+// COMMAND KICK
 // =======================
-bot.onText(/^\.kick$/, async (msg)=>{
+bot.onText(/\/kick/, async (msg)=>{
 
   const chatId = msg.chat.id;
   const adminId = msg.from.id;
@@ -290,14 +302,8 @@ bot.onText(/^\.kick$/, async (msg)=>{
   const targetId = msg.reply_to_message.from.id;
   const targetMember = await bot.getChatMember(chatId,targetId);
 
-  // ADMIN tidak boleh kick owner
-  if(adminMember.status !== "creator" && targetMember.status === "creator"){
+  if(targetMember.status === "creator"){
     return bot.sendMessage(chatId,"❌ Tidak bisa kick owner.");
-  }
-
-  // ADMIN tidak boleh kick admin lain
-  if(adminMember.status !== "creator" && targetMember.status === "administrator"){
-    return bot.sendMessage(chatId,"❌ Admin tidak bisa kick admin lain.");
   }
 
   await bot.banChatMember(chatId,targetId);
