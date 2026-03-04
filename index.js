@@ -55,7 +55,7 @@ bot.on("message", async (msg) => {
 `𝐇𝐚𝐥𝐨 ${member.first_name} 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝗧𝗼 ${groupName}
 User: ${mentionUser}
 ID: ${member.id}
-DILARANG SPAM & KIRIM LINK SEMBARANGAN YAA DEK`,
+JANGAN SPAM & KIRIM LINK SEMBARANGAN YAA`,
       {
         parse_mode: "Markdown",
         disable_web_page_preview: true,
