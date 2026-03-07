@@ -64,6 +64,7 @@ bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
 
   if (
+    msg.new_chat_members ||
     msg.left_chat_member ||
     msg.new_chat_title ||
     msg.new_chat_photo ||
