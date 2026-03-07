@@ -53,6 +53,34 @@ function formatDateTime(timestamp) {
 }
 
 // =======================
+// HAPUS PESAN SISTEM OTOMATIS
+// Semua pesan sistem seperti X keluar, judul diubah, dll
+// new_chat_members dikecualikan karena sudah ada welcome message
+// =======================
+bot.on("message", async (msg) => {
+
+  if (msg.chat.type === "private") return;
+
+  const chatId = msg.chat.id;
+
+  if (
+    msg.left_chat_member ||
+    msg.new_chat_title ||
+    msg.new_chat_photo ||
+    msg.delete_chat_photo ||
+    msg.pinned_message ||
+    msg.group_chat_created ||
+    msg.supergroup_chat_created ||
+    msg.channel_chat_created
+  ) {
+    try {
+      await bot.deleteMessage(chatId, msg.message_id);
+    } catch {}
+  }
+
+});
+
+// =======================
 // WELCOME MESSAGE
 // =======================
 bot.on("message", async (msg) => {
