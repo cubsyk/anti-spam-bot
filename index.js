@@ -5,6 +5,12 @@ const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 
 console.log("Bot berjalan...");
 
+bot.on("message", async (msg) => {
+  if (msg.new_chat_members) {
+    console.log("NEW MEMBER EVENT:", JSON.stringify(msg.new_chat_members));
+  }
+});
+
 // =======================
 // ERROR HANDLER
 // =======================
@@ -381,3 +387,4 @@ Status: Telah dikeluarkan dari grup
   );
 
 });
+
