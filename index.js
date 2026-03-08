@@ -1,15 +1,16 @@
 require("dotenv").config();
 const TelegramBot = require("node-telegram-bot-api");
 
-const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
-
-console.log("Bot berjalan...");
-
-bot.on("message", async (msg) => {
-  if (msg.new_chat_members) {
-    console.log("NEW MEMBER EVENT:", JSON.stringify(msg.new_chat_members));
+// Tambah allowed_updates agar chat_member event diterima
+const bot = new TelegramBot(process.env.BOT_TOKEN, {
+  polling: {
+    params: {
+      allowed_updates: ["message", "chat_member", "callback_query"]
+    }
   }
 });
+
+console.log("Bot berjalan...");
 
 // =======================
 // ERROR HANDLER
@@ -60,8 +61,6 @@ function formatDateTime(timestamp) {
 
 // =======================
 // HAPUS PESAN SISTEM OTOMATIS
-// Semua pesan sistem seperti X keluar, judul diubah, dll
-// new_chat_members dikecualikan karena sudah ada welcome message
 // =======================
 bot.on("message", async (msg) => {
 
@@ -88,52 +87,65 @@ bot.on("message", async (msg) => {
 });
 
 // =======================
-// WELCOME MESSAGE
+// WELCOME MESSAGE — pakai chat_member
+// Lebih reliable dari new_chat_members untuk supergroup
 // =======================
-bot.on("message", async (msg) => {
+bot.on("chat_member", async (update) => {
 
-  if (!msg.new_chat_members) return;
+  const chatId = update.chat.id;
+  const member = update.new_chat_member;
 
-  const chatId = msg.chat.id;
-  const groupName = escapeMarkdown(msg.chat.title);
+  // Hanya proses kalau status berubah jadi member/administrator
+  const newStatus = member.status;
+  const oldStatus = update.old_chat_member.status;
 
-  for (const member of msg.new_chat_members) {
+  // Hanya trigger kalau user baru join (dari non-member jadi member)
+  if (
+    !["left", "kicked", "restricted"].includes(oldStatus) ||
+    !["member", "administrator", "creator"].includes(newStatus)
+  ) return;
 
-    const name = escapeMarkdown(member.first_name);
+  const user = member.user;
 
-    const mentionUser = member.username
-      ? `@${escapeMarkdown(member.username)}`
-      : `[${name}](tg://user?id=${member.id})`;
+  // Skip kalau bot
+  if (user.is_bot) return;
 
-    try {
-      if (lastWelcomeMessage[chatId]) {
-        await bot.deleteMessage(chatId, lastWelcomeMessage[chatId]);
-      }
-    } catch {}
+  const groupName = escapeMarkdown(update.chat.title);
+  const name = escapeMarkdown(user.first_name);
 
-    const sent = await bot.sendMessage(
-      chatId,
+  const mentionUser = user.username
+    ? `@${escapeMarkdown(user.username)}`
+    : `[${name}](tg://user?id=${user.id})`;
+
+  try {
+    if (lastWelcomeMessage[chatId]) {
+      await bot.deleteMessage(chatId, lastWelcomeMessage[chatId]);
+    }
+  } catch {}
+
+  const sent = await bot.sendMessage(
+    chatId,
 `Halo ${name} Welcome To ${groupName}
 User: ${mentionUser}
-ID: ${member.id}
+ID: ${user.id}
 JANGAN SPAM & KIRIM LINK SEMBARANGAN`,
-      {
-        parse_mode: "Markdown",
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: "ASUPAN",
-                url: PROMO_CHANNEL
-              }
-            ]
+    {
+      parse_mode: "Markdown",
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "ASUPAN",
+              url: PROMO_CHANNEL
+            }
           ]
-        }
+        ]
       }
-    );
+    }
+  );
 
-    lastWelcomeMessage[chatId] = sent.message_id;
-  }
+  lastWelcomeMessage[chatId] = sent.message_id;
+
 });
 
 // =======================
@@ -301,17 +313,14 @@ bot.onText(/^\.mute (\d+)$/, async (msg, match) => {
   const targetMember = await bot.getChatMember(chatId, targetId);
   const targetStatus = targetMember.status;
 
-  // Admin coba mute owner
   if (targetStatus === "creator") {
     return bot.sendMessage(chatId, "❌ Tidak bisa mute owner.");
   }
 
-  // Owner coba mute admin
   if (targetStatus === "administrator" && callerStatus === "creator") {
     return bot.sendMessage(chatId, "Jangan jahat bang 😭🙏");
   }
 
-  // Admin coba mute sesama admin
   if (targetStatus === "administrator" && callerStatus === "administrator") {
     return bot.sendMessage(chatId, "❌ Tidak bisa mute sesama admin.");
   }
@@ -356,17 +365,14 @@ bot.onText(/^\.kick$/, async (msg) => {
   const targetMember = await bot.getChatMember(chatId, targetId);
   const targetStatus = targetMember.status;
 
-  // Admin coba kick owner
   if (targetStatus === "creator") {
     return bot.sendMessage(chatId, "❌ Tidak bisa kick owner.");
   }
 
-  // Owner coba kick admin
   if (targetStatus === "administrator" && callerStatus === "creator") {
     return bot.sendMessage(chatId, "Jangan jahat bang 😭🙏");
   }
 
-  // Admin coba kick sesama admin
   if (targetStatus === "administrator" && callerStatus === "administrator") {
     return bot.sendMessage(chatId, "❌ Tidak bisa kick sesama admin.");
   }
@@ -387,4 +393,3 @@ Status: Telah dikeluarkan dari grup
   );
 
 });
-
