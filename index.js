@@ -24,7 +24,7 @@ const SPAM_LIMIT = 5;
 const TIME_WINDOW = 5000;
 const MIN_MUTE_DURATION = 30;
 
-const PROMO_CHANNEL = "https://t.me/chsendaljepit";
+const PROMO_CHANNEL = "https://t.me/seducteasech";
 
 const userMessages = {};
 let lastWelcomeMessage = {};
@@ -382,3 +382,4 @@ Status: Telah dikeluarkan dari grup
 
 
 });
+
