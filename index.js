@@ -28,7 +28,6 @@ const PROMO_CHANNEL = "https://t.me/seducteasech";
 
 const userMessages = {};
 let lastWelcomeMessage = {};
-const lastWarningMessage = {};
 
 // =======================
 // ESCAPE MARKDOWN
@@ -55,6 +54,8 @@ function formatDateTime(timestamp) {
 
 // =======================
 // HAPUS PESAN SISTEM OTOMATIS
+// Semua pesan sistem seperti X keluar, judul diubah, dll
+// new_chat_members dikecualikan karena sudah ada welcome message
 // =======================
 bot.on("message", async (msg) => {
 
@@ -106,7 +107,7 @@ bot.on("message", async (msg) => {
 
     const sent = await bot.sendMessage(
       chatId,
-`Halo ${name} Welcome To ${groupName}
+`𝐖𝐞𝐥𝐜𝐨𝐦𝐞 ${name} 𝐓𝐨 ${groupName}
 User: ${mentionUser}
 ID: ${member.id}
 JANGAN SPAM & KIRIM LINK SEMBARANGAN`,
@@ -116,7 +117,7 @@ JANGAN SPAM & KIRIM LINK SEMBARANGAN`,
           inline_keyboard: [
             [
               {
-                text: "ASUPAN",
+                text: "ASUPAN FREE",
                 url: PROMO_CHANNEL
               }
             ]
@@ -229,14 +230,7 @@ async function muteUser(chatId, userId, msg, reason, customDuration) {
   const name = escapeMarkdown(msg.from.first_name);
   const untilFormatted = formatDateTime(until * 1000);
 
-  // Hapus pesan peringatan sebelumnya
-  try {
-    if (lastWarningMessage[chatId]) {
-      await bot.deleteMessage(chatId, lastWarningMessage[chatId]);
-    }
-  } catch {}
-
-  const sent = await bot.sendMessage(
+  await bot.sendMessage(
     chatId,
 `🚫 *PERINGATAN MODERASI*
 \`\`\`
@@ -247,8 +241,6 @@ Alasan: ${reason}
 \`\`\``,
     { parse_mode: "Markdown" }
   );
-
-  lastWarningMessage[chatId] = sent.message_id;
 
 }
 
@@ -303,14 +295,17 @@ bot.onText(/^\.mute (\d+)$/, async (msg, match) => {
   const targetMember = await bot.getChatMember(chatId, targetId);
   const targetStatus = targetMember.status;
 
+  // Admin coba mute owner
   if (targetStatus === "creator") {
     return bot.sendMessage(chatId, "❌ Tidak bisa mute owner.");
   }
 
+  // Owner coba mute admin
   if (targetStatus === "administrator" && callerStatus === "creator") {
     return bot.sendMessage(chatId, "Jangan jahat bang 😭🙏");
   }
 
+  // Admin coba mute sesama admin
   if (targetStatus === "administrator" && callerStatus === "administrator") {
     return bot.sendMessage(chatId, "❌ Tidak bisa mute sesama admin.");
   }
@@ -355,14 +350,17 @@ bot.onText(/^\.kick$/, async (msg) => {
   const targetMember = await bot.getChatMember(chatId, targetId);
   const targetStatus = targetMember.status;
 
+  // Admin coba kick owner
   if (targetStatus === "creator") {
     return bot.sendMessage(chatId, "❌ Tidak bisa kick owner.");
   }
 
+  // Owner coba kick admin
   if (targetStatus === "administrator" && callerStatus === "creator") {
     return bot.sendMessage(chatId, "Jangan jahat bang 😭🙏");
   }
 
+  // Admin coba kick sesama admin
   if (targetStatus === "administrator" && callerStatus === "administrator") {
     return bot.sendMessage(chatId, "❌ Tidak bisa kick sesama admin.");
   }
@@ -381,5 +379,6 @@ Status: Telah dikeluarkan dari grup
 \`\`\``,
     { parse_mode: "Markdown" }
   );
+
 
 });
