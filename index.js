@@ -17,6 +17,7 @@ process.on("uncaughtException", console.error);
 // =======================
 let ANTI_LINK = true;
 let ANTI_SPAM = true;
+let ANTI_FORWARD = true;
 
 let DEFAULT_MUTE_DURATION = 60;
 
@@ -158,7 +159,8 @@ JANGAN SPAM & KIRIM LINK SEMBARANGAN`,
 // =======================
 bot.on("message", async (msg) => {
 
-  if (!msg.text || msg.chat.type === "private") return;
+  if (msg.chat.type === "private") return;
+  if (!msg.from) return;
 
   const chatId = msg.chat.id;
   const userId = msg.from.id;
@@ -171,9 +173,26 @@ bot.on("message", async (msg) => {
     if (["administrator", "creator"].includes(member.status)) return;
 
     // ===================
+    // ANTI FORWARD
+    // ===================
+    if (ANTI_FORWARD && (msg.forward_from || msg.forward_from_chat)) {
+
+      await bot.deleteMessage(chatId, msg.message_id);
+
+      await muteUser(
+        chatId,
+        userId,
+        msg,
+        "Meneruskan pesan tidak diperbolehkan."
+      );
+
+      return;
+    }
+
+    // ===================
     // ANTI LINK
     // ===================
-    if (ANTI_LINK) {
+    if (ANTI_LINK && msg.text) {
 
       const linkRegex = /(https?:\/\/|t\.me|www\.)/i;
 
@@ -195,7 +214,7 @@ bot.on("message", async (msg) => {
     // ===================
     // ANTI SPAM
     // ===================
-    if (ANTI_SPAM) {
+    if (ANTI_SPAM && msg.text) {
 
       if (!userMessages[userId]) {
         userMessages[userId] = [];
