@@ -37,7 +37,6 @@ const lastWarningMessage = {};
 let welcomeLock = {};
 
 // Simpan jumlah warn per user per grup
-// warnCount[chatId][userId] = jumlah warn
 const warnCount = {};
 
 // =======================
@@ -53,10 +52,16 @@ function escapeMarkdown(text) {
 // =======================
 function formatDateTime(timestamp) {
   const date = new Date(timestamp);
-  // WIB = UTC+7
-  const wib = new Date(date.getTime() + 7 * 60 * 60 * 1000);
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${pad(wib.getUTCDate())}/${pad(wib.getUTCMonth() + 1)}/${wib.getUTCFullYear()} ${pad(wib.getUTCHours())}:${pad(wib.getUTCMinutes())}:${pad(wib.getUTCSeconds())} WIB`;
+  return date.toLocaleString("id-ID", {
+    timeZone: "Asia/Jakarta",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  });
 }
 
 // =======================
@@ -88,7 +93,6 @@ bot.on("message", async (msg) => {
 
 // =======================
 // WELCOME MESSAGE
-// Pakai lock agar tidak bentrok saat banyak member join bersamaan
 // =======================
 bot.on("message", async (msg) => {
 
@@ -251,7 +255,7 @@ async function muteUser(chatId, userId, msg, reason, customDuration, permanent =
   const duration = customDuration || DEFAULT_MUTE_DURATION;
 
   if (permanent) {
-    // Mute permanen — until_date = 0 atau waktu sangat jauh
+
     await bot.restrictChatMember(chatId, userId, {
       permissions: {
         can_send_messages: false,
@@ -403,7 +407,7 @@ bot.onText(/^\.warn$/, async (msg) => {
 
   } else if (warn >= 3) {
 
-    warnCount[chatId][targetId] = 0; // reset warn setelah permanen
+    warnCount[chatId][targetId] = 0;
 
     await muteUser(
       chatId,
@@ -411,7 +415,7 @@ bot.onText(/^\.warn$/, async (msg) => {
       msg.reply_to_message,
       "Warn 3 — telah melanggar rules, di-mute permanen.",
       null,
-      true // permanent
+      true
     );
 
   }
