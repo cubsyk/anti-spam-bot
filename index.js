@@ -36,6 +36,10 @@ const lastWarningMessage = {};
 // Mutex agar welcome tidak dikirim bersamaan
 let welcomeLock = {};
 
+// Simpan jumlah warn per user per grup
+// warnCount[chatId][userId] = jumlah warn
+const warnCount = {};
+
 // =======================
 // ESCAPE MARKDOWN
 // =======================
@@ -45,18 +49,14 @@ function escapeMarkdown(text) {
 }
 
 // =======================
-// FORMAT WAKTU
+// FORMAT WAKTU WIB
 // =======================
 function formatDateTime(timestamp) {
   const date = new Date(timestamp);
-  return date.toLocaleString("id-ID", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
-  });
+  // WIB = UTC+7
+  const wib = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(wib.getUTCDate())}/${pad(wib.getUTCMonth() + 1)}/${wib.getUTCFullYear()} ${pad(wib.getUTCHours())}:${pad(wib.getUTCMinutes())}:${pad(wib.getUTCSeconds())} WIB`;
 }
 
 // =======================
@@ -96,7 +96,6 @@ bot.on("message", async (msg) => {
 
   const chatId = msg.chat.id;
 
-  // Tunggu kalau masih ada proses welcome yang berjalan
   while (welcomeLock[chatId]) {
     await new Promise(resolve => setTimeout(resolve, 300));
   }
@@ -115,7 +114,6 @@ bot.on("message", async (msg) => {
         ? `@${escapeMarkdown(member.username)}`
         : `[${name}](tg://user?id=${member.id})`;
 
-      // Hapus pesan welcome sebelumnya
       try {
         if (lastWelcomeMessage[chatId]) {
           await bot.deleteMessage(chatId, lastWelcomeMessage[chatId]);
@@ -248,9 +246,51 @@ bot.on("message", async (msg) => {
 // =======================
 // MUTE FUNCTION
 // =======================
-async function muteUser(chatId, userId, msg, reason, customDuration) {
+async function muteUser(chatId, userId, msg, reason, customDuration, permanent = false) {
 
   const duration = customDuration || DEFAULT_MUTE_DURATION;
+
+  if (permanent) {
+    // Mute permanen — until_date = 0 atau waktu sangat jauh
+    await bot.restrictChatMember(chatId, userId, {
+      permissions: {
+        can_send_messages: false,
+        can_send_audios: false,
+        can_send_documents: false,
+        can_send_photos: false,
+        can_send_videos: false,
+        can_send_video_notes: false,
+        can_send_voice_notes: false,
+        can_send_polls: false,
+        can_send_other_messages: false,
+        can_add_web_page_previews: false,
+      }
+    });
+
+    const name = escapeMarkdown(msg.from.first_name);
+
+    try {
+      if (lastWarningMessage[chatId]) {
+        await bot.deleteMessage(chatId, lastWarningMessage[chatId]);
+        lastWarningMessage[chatId] = null;
+      }
+    } catch {}
+
+    const sent = await bot.sendMessage(
+      chatId,
+`🚫 *PERINGATAN MODERASI*
+\`\`\`
+User  : ${name}
+Muted : PERMANEN
+Alasan: ${reason}
+\`\`\``,
+      { parse_mode: "Markdown" }
+    );
+
+    lastWarningMessage[chatId] = sent.message_id;
+    return;
+  }
+
   const until = Math.floor(Date.now() / 1000) + duration;
 
   await bot.restrictChatMember(chatId, userId, {
@@ -272,7 +312,6 @@ async function muteUser(chatId, userId, msg, reason, customDuration) {
   const name = escapeMarkdown(msg.from.first_name);
   const untilFormatted = formatDateTime(until * 1000);
 
-  // Hapus pesan peringatan sebelumnya
   try {
     if (lastWarningMessage[chatId]) {
       await bot.deleteMessage(chatId, lastWarningMessage[chatId]);
@@ -295,6 +334,89 @@ Alasan: ${reason}
   lastWarningMessage[chatId] = sent.message_id;
 
 }
+
+// =======================
+// COMMAND .warn
+// =======================
+bot.onText(/^\.warn$/, async (msg) => {
+
+  const chatId = msg.chat.id;
+  const callerId = msg.from.id;
+
+  const callerMember = await bot.getChatMember(chatId, callerId);
+  const callerStatus = callerMember.status;
+
+  if (!["administrator", "creator"].includes(callerStatus)) {
+    return bot.sendMessage(chatId, "❌ Hanya admin.");
+  }
+
+  if (!msg.reply_to_message) {
+    return bot.sendMessage(chatId, "⚠️ Reply pesan user yang ingin diberi warn.");
+  }
+
+  const targetId = msg.reply_to_message.from.id;
+  const targetMember = await bot.getChatMember(chatId, targetId);
+  const targetStatus = targetMember.status;
+
+  if (targetStatus === "creator") {
+    return bot.sendMessage(chatId, "❌ Tidak bisa warn owner.");
+  }
+
+  if (targetStatus === "administrator" && callerStatus === "creator") {
+    return bot.sendMessage(chatId, "Jangan jahat bang 😭🙏");
+  }
+
+  if (targetStatus === "administrator" && callerStatus === "administrator") {
+    return bot.sendMessage(chatId, "❌ Tidak bisa warn sesama admin.");
+  }
+
+  // Hapus pesan .warn dan pesan yang di-reply
+  try { await bot.deleteMessage(chatId, msg.message_id); } catch {}
+  try { await bot.deleteMessage(chatId, msg.reply_to_message.message_id); } catch {}
+
+  // Tambah warn counter
+  if (!warnCount[chatId]) warnCount[chatId] = {};
+  if (!warnCount[chatId][targetId]) warnCount[chatId][targetId] = 0;
+
+  warnCount[chatId][targetId]++;
+  const warn = warnCount[chatId][targetId];
+
+  if (warn === 1) {
+
+    await muteUser(
+      chatId,
+      targetId,
+      msg.reply_to_message,
+      "Warn 1 — hati-hati!",
+      30
+    );
+
+  } else if (warn === 2) {
+
+    await muteUser(
+      chatId,
+      targetId,
+      msg.reply_to_message,
+      "Warn 2 — sekali lagi akan mute permanen!",
+      DEFAULT_MUTE_DURATION
+    );
+
+  } else if (warn >= 3) {
+
+    warnCount[chatId][targetId] = 0; // reset warn setelah permanen
+
+    await muteUser(
+      chatId,
+      targetId,
+      msg.reply_to_message,
+      "Warn 3 — telah melanggar rules, di-mute permanen.",
+      null,
+      true // permanent
+    );
+
+  }
+
+});
 
 // =======================
 // COMMAND .setmute
@@ -325,9 +447,10 @@ bot.onText(/^\.setmute (\d+)$/, async (msg, match) => {
 });
 
 // =======================
-// COMMAND .mute
+// COMMAND .mute (dengan alasan custom)
+// Format: .mute <detik> <alasan>
 // =======================
-bot.onText(/^\.mute (\d+)$/, async (msg, match) => {
+bot.onText(/^\.mute (\d+)(?:\s+(.+))?$/, async (msg, match) => {
 
   const chatId = msg.chat.id;
   const callerId = msg.from.id;
@@ -360,6 +483,7 @@ bot.onText(/^\.mute (\d+)$/, async (msg, match) => {
   }
 
   let duration = parseInt(match[1]);
+  const alasan = match[2] ? match[2].trim() : "Mute manual oleh admin.";
 
   if (duration < MIN_MUTE_DURATION) {
     await bot.sendMessage(chatId, `⚠️ Durasi minimum ${MIN_MUTE_DURATION} detik, otomatis diset ${MIN_MUTE_DURATION} detik.`);
@@ -370,7 +494,7 @@ bot.onText(/^\.mute (\d+)$/, async (msg, match) => {
     chatId,
     targetId,
     msg.reply_to_message,
-    "Mute manual oleh admin.",
+    alasan,
     duration
   );
 
