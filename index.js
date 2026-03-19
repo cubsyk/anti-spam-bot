@@ -494,6 +494,10 @@ bot.onText(/^\.mute (\d+)(?:\s+(.+))?$/, async (msg, match) => {
     duration = MIN_MUTE_DURATION;
   }
 
+  // Hapus pesan .mute dan pesan yang di-reply
+  try { await bot.deleteMessage(chatId, msg.message_id); } catch {}
+  try { await bot.deleteMessage(chatId, msg.reply_to_message.message_id); } catch {}
+
   await muteUser(
     chatId,
     targetId,
